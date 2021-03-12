@@ -1,7 +1,3 @@
-*#
-*~
-.venv
-
 # Processing
 .DS_Store
 applet
@@ -13,3 +9,11 @@ application.windows32
 application.windows64
 application.macosx
 out
+
+# Project stuff
+*#
+*~
+.venv
+*.java
+*.jar
+**/code
