@@ -1,19 +1,3 @@
-/**
- * Based on:
- **********************************************************************************************************************
- * @file       sketch_2_Hello_Wall.pde
- * @author     Steve Ding, Colin Gallacher, Antoine Weill--Duflos
- * @version    V1.0.0
- * @date       09-February-2021
- * @brief      PID example with random position of a target
- **********************************************************************************************************************
- * @attention
- *
- *
- **********************************************************************************************************************
-*/
-
-
 /* Definitions **********************************************************************************************************/
 /* define blocks and paramters*/
 float             liquidHeight                        = 4;
@@ -29,8 +13,6 @@ FCircle           c2;
 
 /* define game ball and paramters */
 float             objectDensity                       = 200;
-FCircle           g2;
-FBox              g1;
 
 /* define game start */
 boolean           gameStart                           = false;
@@ -41,6 +23,10 @@ boolean           runLevel                            = false;
 /* define game parameters */
 int maxLevel = 3;
 int currentLevel = 1;
+int levelProgress = 0;
+int levelBase = 0;
+float levelAngle = 0;
+float levelForce = 0;
 
 /* end definitions *****************************************************************************************************/ 
 
@@ -56,7 +42,7 @@ void PhysicsDefinitions()
 {	  
 		/* Start Button */
 
-		c2                  = new FCircle(3.0);
+		c2                  = new FCircle(5.0);
 		c2.setPosition(worldWidth/2, worldHeight/2);
 		c2.setFill(255);
 		c2.setStaticBody(true);
@@ -86,8 +72,10 @@ void keyPressed()
 				if (!gameStart || gameEnd)
 						return;
 				
-				if (currentLevel < maxLevel)
+				if (currentLevel < maxLevel){
 						currentLevel++;
+						resetLevel();
+				}
 				else {
 						gameStart = false;
 						gameEnd = true;
@@ -101,6 +89,7 @@ void keyPressed()
 		{
 				gameStart = false;
 				gameEnd = false;
+				resetLevel();
 		}
 }
 
@@ -138,8 +127,11 @@ void PhysicsSimulations()
 						gameStart = true;
 						s.h_avatar.setSensor(true);
 				}
-				atCenter = true;
-				runLevel = true;		
+				if (!runLevel){
+						atCenter = true;
+						runLevel = true;
+						resetLevel();
+				}
 		} else if (s.h_avatar.isTouchingBody(c2) && atCenter) {
 				runLevel = true;
 		}	else {
@@ -148,18 +140,43 @@ void PhysicsSimulations()
 		}
 
 		if (atCenter){
+				levelAngle = 0; //random(-PI, PI);
+				
 				switch (currentLevel){
-				case 1:
-						
+				case 1:// calm
+						levelProgress = millis() - levelBase;
+						levelForce = 1.5 + levelProgress * 0.0002;
+						fEE.add(levelForce * cos(levelAngle) , levelForce * sin(levelAngle));
+						s.h_avatar.setDamping(500);
 						break;
-				case 2:
-						
+				case 2:// angry
+						levelProgress = millis() - levelBase;
+
+						// delayed force push
+						if (levelProgress > 2000)
+						{
+								levelForce = 3 + levelProgress * 0.0002;
+								fEE.add(levelForce * cos(levelAngle) , levelForce * sin(levelAngle));
+						}
 						break;
-				case 3:
-						
+				case 3:// agitated
+						levelProgress = millis() - levelBase;
+						levelForce = 1.5 + levelProgress * 0.001;
+						fEE.add(levelForce * cos(levelAngle) , levelForce * sin(levelAngle));
+
+						// adding noice
+						levelAngle = random(-PI, PI);
+						fEE.add(1.5 * cos(levelAngle) , 1.5 * sin(levelAngle));
 						break;
 				}
+				fEE.limit(3.5);
 		}
+}
+
+void resetLevel() {
+		levelProgress = 0;
+		levelBase = millis();
+		s.h_avatar.setDamping(000);
 }
 
 void exit() {
